@@ -1,35 +1,22 @@
+import { PutObjectCommand } from '@aws-sdk/client-s3';
 import { $, component$, useSignal } from '@builder.io/qwik';
 import { type DocumentHead } from '@builder.io/qwik-city';
-import { s3 } from '~/utils/aws';
+import { s3Client } from '~/utils/aws';
 
 export default component$(() => {
 	const imagesSig = useSignal([]);
-	const progressSig = useSignal(0);
+	const statusSig = useSignal<'' | 'Uploading...' | 'Complete!'>('');
 
 	const uploadFile = $(async (file: File) => {
+		statusSig.value = 'Uploading...';
 		const params = {
 			Bucket: import.meta.env.VITE_S3_BUCKET_NAME,
 			Key: file.name,
 			Body: file,
 		};
-
-		const upload = s3
-			.putObject(params)
-			.on('httpUploadProgress', (evt) => {
-				progressSig.value = parseInt(
-					((evt.loaded * 100) / evt.total).toString()
-				);
-				console.log(
-					'Uploading ' +
-						parseInt(((evt.loaded * 100) / evt.total).toString()) +
-						'%'
-				);
-			})
-			.promise();
-
-		await upload.then(() => {
-			progressSig.value = 100;
-		});
+		const command = new PutObjectCommand(params);
+		await s3Client.send(command);
+		statusSig.value = 'Complete!';
 	});
 
 	return (
@@ -69,15 +56,9 @@ export default component$(() => {
 					}}
 				/>
 				<div class='w-[250px] bg-gray-200 rounded-full h-2.5 dark:bg-gray-700'>
-					<div
-						class='bg-blue-600 h-2.5 rounded-full'
-						style={`width: ${progressSig.value}%`}
-					/>
-					{progressSig.value === 100 && (
-						<div class='text-center text-gray-500 dark:text-gray-400 py-4'>
-							File uploaded!
-						</div>
-					)}
+					<div class='text-center text-gray-500 dark:text-gray-400 py-4'>
+						{statusSig.value}
+					</div>
 				</div>
 			</label>
 
