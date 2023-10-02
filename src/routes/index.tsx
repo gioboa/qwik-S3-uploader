@@ -1,13 +1,40 @@
-import { component$ } from '@builder.io/qwik';
-import type { DocumentHead } from '@builder.io/qwik-city';
+import { $, component$, useSignal } from '@builder.io/qwik';
+import { type DocumentHead } from '@builder.io/qwik-city';
+import { s3 } from '~/utils/aws';
 
 export default component$(() => {
+	const imagesSig = useSignal([]);
+	const progressSig = useSignal(0);
+
+	const uploadFile = $(async (file: File) => {
+		const params = {
+			Bucket: import.meta.env.VITE_S3_BUCKET_NAME,
+			Key: file.name,
+			Body: file,
+		};
+
+		const upload = s3
+			.putObject(params)
+			.on('httpUploadProgress', (evt) => {
+				progressSig.value = parseInt(
+					((evt.loaded * 100) / evt.total).toString()
+				);
+				console.log(
+					'Uploading ' +
+						parseInt(((evt.loaded * 100) / evt.total).toString()) +
+						'%'
+				);
+			})
+			.promise();
+
+		await upload.then(() => {
+			progressSig.value = 100;
+		});
+	});
+
 	return (
 		<div class='flex items-center justify-center w-full h-full'>
-			<label
-				for='dropzone-file'
-				class='flex flex-col items-center justify-center w-full h-64 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 dark:hover:bg-bray-800 dark:bg-gray-700 hover:bg-gray-100 dark:border-gray-600 dark:hover:border-gray-500 dark:hover:bg-gray-600 max-w-[400px]'
-			>
+			<label class='flex flex-col items-center justify-center w-full h-[300px] border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 dark:bg-gray-700 dark:border-gray-600 max-w-[400px] pb-6'>
 				<div class='flex flex-col items-center justify-center pt-5 pb-6'>
 					<svg
 						class='w-8 h-8 mb-4 text-gray-500 dark:text-gray-400'
@@ -32,18 +59,31 @@ export default component$(() => {
 					</p>
 				</div>
 				<input
-					id='dropzone-file'
 					type='file'
 					class='hidden'
-					onChange$={(_, target) => {
-						let numberOfBytes = 0;
-						for (const file of target.files || []) {
-							numberOfBytes += file.size;
+					onChange$={async (_, target) => {
+						if (target.files) {
+							const file = target.files[0];
+							uploadFile(file);
 						}
-						console.log(numberOfBytes);
 					}}
 				/>
+				<div class='w-[250px] bg-gray-200 rounded-full h-2.5 dark:bg-gray-700'>
+					<div
+						class='bg-blue-600 h-2.5 rounded-full'
+						style={`width: ${progressSig.value}%`}
+					/>
+					{progressSig.value === 100 && (
+						<div class='text-center text-gray-500 dark:text-gray-400 py-4'>
+							File uploaded!
+						</div>
+					)}
+				</div>
 			</label>
+
+			{imagesSig.value.map((_, key) => (
+				<div key={key}>aaa</div>
+			))}
 		</div>
 	);
 });
