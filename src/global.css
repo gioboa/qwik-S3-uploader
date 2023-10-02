@@ -1,4 +1,10 @@
-
+/**
+ * Tailwind CSS imports
+ * View the full documentation at https://tailwindcss.com
+ */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 /**
  * WHAT IS THIS FILE?
@@ -32,4 +38,5 @@ html {
 body {
   padding: 0;
   line-height: inherit;
+  height: 100vh;
 }
