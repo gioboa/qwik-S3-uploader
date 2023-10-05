@@ -3,6 +3,7 @@ import {
 	QwikCityProvider,
 	RouterOutlet,
 	ServiceWorkerRegister,
+	routeAction$,
 } from '@builder.io/qwik-city';
 import { RouterHead } from './components/router-head/router-head';
 
