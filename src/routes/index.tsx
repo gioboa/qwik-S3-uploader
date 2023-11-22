@@ -1,11 +1,6 @@
-import { Upload } from '@aws-sdk/lib-storage';
 import { $, component$, useSignal } from '@builder.io/qwik';
-import {
-	routeLoader$,
-	type DocumentHead,
-	server$,
-} from '@builder.io/qwik-city';
-import { s3Client } from '~/utils/aws';
+import { routeLoader$, type DocumentHead } from '@builder.io/qwik-city';
+import { s3 } from '~/utils/aws';
 
 type Image = {
 	moderated?: boolean;
@@ -23,7 +18,7 @@ export const useImages = routeLoader$(async () => {
 export default component$(() => {
 	const imagesSig = useImages();
 	const inputFileSig = useSignal('');
-	const selectedImageSig = useSignal(imagesSig.value[0]);
+	const selectedImageSig = useSignal<Image | undefined>(imagesSig.value[0]);
 	const statusSig = useSignal<'' | 'Uploading...' | 'Complete!'>('');
 
 	const uploadFile = $(async (file: File) => {
@@ -31,18 +26,15 @@ export default component$(() => {
 		try {
 			const params = {
 				Bucket: import.meta.env.VITE_S3_BUCKET_NAME,
-				Key: file.name.replaceAll(' ', '_'),
+				Key: file.name,
 				Body: file,
-				ContentLength: file.size,
-				queueSize: 4,
-				partSize: 1024 * 1024 * 5,
-				leavePartsOnError: false,
 			};
-			const parallelUploads = new Upload({
-				client: s3Client,
-				params,
-			});
-			await parallelUploads.done();
+
+			s3.putObject(params)
+				.on('httpUploadProgress', (...args) => {
+					console.log('Uploading...', args);
+				})
+				.promise();
 		} catch (e) {
 			console.log(e);
 		}
@@ -144,33 +136,35 @@ export default component$(() => {
 					))}
 				</div>
 
-				<div class='sm:col-span-6 lg:col-span-5'>
-					<a href='#'>
-						<img
-							class='h-56 bg-cover text-center overflow-hidden object-contain'
-							src={`https://d36xdeoctevqn1.cloudfront.net/${selectedImageSig.value.s3_key}`}
-							alt={selectedImageSig.value.s3_key}
-							width={300}
-							height={300}
-						></img>
-					</a>
-					<div class='mt-3 bg-white rounded-b lg:rounded-b-none lg:rounded-r flex flex-col justify-between leading-normal'>
-						<div class='lg:px-4'>
-							<a
-								href='#'
-								class='text-gray-900 font-bold text-2xl mb-2 hover:text-indigo-600 transition duration-500 ease-in-out'
-							>
-								{selectedImageSig.value.s3_key}
-							</a>
-							<p
-								class='text-gray-700 text-xl mt-2'
-								dangerouslySetInnerHTML={transformHashTags(
-									selectedImageSig.value.translated_generation
-								)}
-							/>
+				{selectedImageSig.value && (
+					<div class='sm:col-span-6 lg:col-span-5'>
+						<a href='#'>
+							<img
+								class='h-56 bg-cover text-center overflow-hidden object-contain'
+								src={`https://d36xdeoctevqn1.cloudfront.net/${selectedImageSig.value.s3_key}`}
+								alt={selectedImageSig.value.s3_key}
+								width={300}
+								height={300}
+							></img>
+						</a>
+						<div class='mt-3 bg-white rounded-b lg:rounded-b-none lg:rounded-r flex flex-col justify-between leading-normal'>
+							<div class='lg:px-4'>
+								<a
+									href='#'
+									class='text-gray-900 font-bold text-2xl mb-2 hover:text-indigo-600 transition duration-500 ease-in-out'
+								>
+									{selectedImageSig.value.s3_key}
+								</a>
+								<p
+									class='text-gray-700 text-xl mt-2'
+									dangerouslySetInnerHTML={transformHashTags(
+										selectedImageSig.value.translated_generation
+									)}
+								/>
+							</div>
 						</div>
 					</div>
-				</div>
+				)}
 			</div>
 		</div>
 	);
