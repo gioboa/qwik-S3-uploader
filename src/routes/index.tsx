@@ -1,5 +1,5 @@
-import { $, component$, useSignal } from '@builder.io/qwik';
-import { routeLoader$, type DocumentHead } from '@builder.io/qwik-city';
+import { $, component$, useSignal, useVisibleTask$ } from '@builder.io/qwik';
+import { type DocumentHead } from '@builder.io/qwik-city';
 import { s3 } from '~/utils/aws';
 
 type Image = {
@@ -9,17 +9,18 @@ type Image = {
 	translated_generation: string;
 };
 
-export const useImages = routeLoader$(async () => {
-	const response = await fetch(import.meta.env.VITE_LAMBDA_URL);
-	const images: Image[] = await response.json();
-	return images.filter((i) => !i.moderated);
-});
-
 export default component$(() => {
-	const imagesSig = useImages();
+	const imagesSig = useSignal<Image[]>();
 	const inputFileSig = useSignal('');
-	const selectedImageSig = useSignal<Image | undefined>(imagesSig.value[0]);
+	const selectedImageSig = useSignal<Image | undefined>();
 	const statusSig = useSignal<'' | 'Uploading...' | 'Complete!'>('');
+
+	useVisibleTask$(async () => {
+		const response = await fetch(import.meta.env.VITE_LAMBDA_URL);
+		const images: Image[] = await response.json();
+		imagesSig.value = images.filter((i) => !i.moderated);
+		selectedImageSig.value = imagesSig.value[0]; 
+	});
 
 	const uploadFile = $(async (file: File) => {
 		statusSig.value = 'Uploading...';
@@ -108,7 +109,7 @@ export default component$(() => {
 				</div>
 
 				<div class='sm:col-span-6 lg:col-span-4'>
-					{imagesSig.value.map((img, key) => (
+					{(imagesSig.value || []).map((img, key) => (
 						<div key={key} class='flex items-start mb-3 pb-3'>
 							<a href='#' class='inline-block mr-3'>
 								<div
