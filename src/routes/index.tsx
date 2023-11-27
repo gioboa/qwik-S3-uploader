@@ -19,7 +19,7 @@ export default component$(() => {
 		const response = await fetch(import.meta.env.VITE_LAMBDA_URL);
 		const images: Image[] = await response.json();
 		imagesSig.value = images.filter((i) => !i.moderated);
-		selectedImageSig.value = imagesSig.value[0]; 
+		selectedImageSig.value = imagesSig.value[0];
 	});
 
 	const uploadFile = $(async (file: File) => {
@@ -27,7 +27,7 @@ export default component$(() => {
 		try {
 			const params = {
 				Bucket: import.meta.env.VITE_S3_BUCKET_NAME,
-				Key: file.name,
+				Key: 'images/' + file.name,
 				Body: file,
 			};
 
