@@ -1,6 +1,7 @@
+import { PutObjectCommand } from '@aws-sdk/client-s3';
 import { $, component$, useSignal, useVisibleTask$ } from '@builder.io/qwik';
 import { type DocumentHead } from '@builder.io/qwik-city';
-import { s3 } from '~/utils/aws';
+import { s3Client } from '~/utils/aws';
 
 type Image = {
 	moderated?: boolean;
@@ -24,20 +25,18 @@ export default component$(() => {
 
 	const uploadFile = $(async (file: File) => {
 		statusSig.value = 'Uploading...';
-		try {
-			const params = {
-				Bucket: import.meta.env.VITE_S3_BUCKET_NAME,
-				Key: 'images/' + file.name,
-				Body: file,
-			};
 
-			s3.putObject(params)
-				.on('httpUploadProgress', (...args) => {
-					console.log('Uploading...', args);
-				})
-				.promise();
-		} catch (e) {
-			console.log(e);
+		const command = new PutObjectCommand({
+			Bucket: import.meta.env.VITE_S3_BUCKET_NAME,
+			Key: 'images/' + file.name,
+			Body: file,
+		});
+
+		try {
+			const response = await s3Client.send(command);
+			console.log(response);
+		} catch (err) {
+			console.error(err);
 		}
 		statusSig.value = 'Complete!';
 		setTimeout(() => {
