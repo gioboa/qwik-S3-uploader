@@ -120,8 +120,7 @@ export default component$(() => {
 									}}
 								></div>
 							</a>
-							<div class='text-sm'>
-								<p class='text-gray-600 text-xs'>{img.s3_key}</p>
+							<div class='text-sm mt-4'>
 								<a
 									href='#'
 									onClick$={() => {
@@ -153,14 +152,13 @@ export default component$(() => {
 									href='#'
 									class='text-gray-900 font-bold text-2xl mb-2 hover:text-indigo-600 transition duration-500 ease-in-out'
 								>
-									{selectedImageSig.value.s3_key}
+									<p
+										class='text-gray-700 text-xl mt-2'
+										dangerouslySetInnerHTML={transformHashTags(
+											selectedImageSig.value.translated_generation
+										)}
+									/>
 								</a>
-								<p
-									class='text-gray-700 text-xl mt-2'
-									dangerouslySetInnerHTML={transformHashTags(
-										selectedImageSig.value.translated_generation
-									)}
-								/>
 							</div>
 						</div>
 					</div>
