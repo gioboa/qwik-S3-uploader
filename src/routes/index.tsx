@@ -147,19 +147,17 @@ export default component$(() => {
 							></img>
 						</a>
 						<div class='mt-3 bg-white rounded-b lg:rounded-b-none lg:rounded-r flex flex-col justify-between leading-normal'>
-							<div class='lg:px-4'>
-								<a
-									href='#'
-									class='text-gray-900 font-bold text-2xl mb-2 hover:text-indigo-600 transition duration-500 ease-in-out'
-								>
-									<p
-										class='text-gray-700 text-xl mt-2'
-										dangerouslySetInnerHTML={transformHashTags(
-											selectedImageSig.value.translated_generation
-										)}
-									/>
-								</a>
-							</div>
+							<a
+								href='#'
+								class='text-gray-900 font-bold text-2xl mb-2 hover:text-indigo-600 transition duration-500 ease-in-out'
+							>
+								<p
+									class='text-gray-700 text-xl mt-2'
+									dangerouslySetInnerHTML={transformHashTags(
+										selectedImageSig.value.translated_generation
+									)}
+								/>
+							</a>
 						</div>
 					</div>
 				)}
